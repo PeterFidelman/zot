@@ -1,0 +1,74 @@
+#!/bin/bash
+
+SLIPBOX_DIR="$HOME/.zot-slipbox"
+
+init() {
+    if [[ ! -e "$SLIPBOX_DIR" ]]; then mkdir "$SLIPBOX_DIR"; fi
+    cd "$SLIPBOX_DIR"
+    # The rest of the script will assume that we are in the slipbox directory.
+}
+
+docstr() {
+    true
+}
+
+new_zettel() {
+    # Note this will loop forever if you've used all numbers in range.
+    while
+        CANDIDATE=$(printf %06d $(shuf -i0-999999 -n 1))
+        [[ -e "$CANDIDATE" ]]
+    do
+        :
+    done
+    echo "$CANDIDATE"
+}
+
+do_subcmd() {
+    subcmd="$1"
+    shift
+
+    init
+    case "$subcmd" in
+    "edit"  ) docstr "open all zettels in text editor for bulk modification"
+              editor . ;;
+    "cat"   ) docstr "view an existing zettel"
+              less --quit-if-one-screen "$1" ;;
+    "edit"  ) docstr "edit an existing zettel"
+              editor "$1" ;;
+    "grep"  ) docstr "search zettels for a regex"
+              grep -in "$1" * ;;
+    "help"  ) docstr "display this message";
+              return 1 ;;
+    "ls"    ) docstr "view all zettel descriptions"
+              for i in $(ls -t); do echo -n "$i: "; head -n 1 "$i"; done ;;
+    "new"   ) docstr "add a new zettel"
+              editor $(new_zettel) ;;
+    ""      ) ;;
+    *)
+        # Unrecognized subcmd
+        return 1
+        ;;
+    esac
+    return 0
+}
+
+usage() {
+    echo "usage: $0 [subcmd]"
+    ((echo "subcmd: | behavior:"
+    declare -f do_subcmd |\
+        grep -B1 '\bdocstr\b' |\
+        grep -o '".*"' |\
+        grep -o '[^"]*' |\
+        sed 'N;s/\n/ | /'
+    ) | column -s '|' -t
+    ) | sed 's/^/  /'
+    exit 1
+}
+
+# Script entry point
+do_subcmd "$@"
+if [[ "$?" -ne 0 ]]
+then
+    usage
+fi
+
