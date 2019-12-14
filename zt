@@ -23,27 +23,42 @@ new_zettel() {
     echo "$CANDIDATE"
 }
 
+pager() {
+    less --quit-if-one-screen $*
+}
+
+do_ls() {
+    (for i in $(ls -t); do
+        echo -n "$i: "; head -n 1 "$i"
+    done) | pager -
+}
+
 do_subcmd() {
     subcmd="$1"
     shift
 
     init
     case "$subcmd" in
-    "edit"  ) docstr "open all zettels in text editor for bulk modification"
-              editor . ;;
-    "cat"   ) docstr "view an existing zettel"
-              less --quit-if-one-screen "$1" ;;
-    "edit"  ) docstr "edit an existing zettel"
+    "add"   ) docstr "add a new zettel"
+              editor $(new_zettel) ;;
+    "all"   ) docstr "view all zettels"
+              tail -n +0 * | pager - ;;
+    "cat"   ) docstr "view specified zettel"
+              pager "$1" ;;
+    "edit"  ) docstr "edit specified zettel"
               editor "$1" ;;
-    "grep"  ) docstr "search zettels for a regex"
-              grep -in "$1" * ;;
+    "grep"  ) docstr "search zettels for a specified regex"
+              grep -i "$1" * ;;
     "help"  ) docstr "display this message";
               return 1 ;;
     "ls"    ) docstr "view all zettel descriptions"
-              for i in $(ls -t); do echo -n "$i: "; head -n 1 "$i"; done ;;
-    "new"   ) docstr "add a new zettel"
-              editor $(new_zettel) ;;
-    ""      ) ;;
+              do_ls ;;
+    "split" ) docstr "clone specified zettel"
+              PARENT=$1
+              CHILD=$(new_zettel)
+	      editor $PARENT $CHILD
+	      ;;
+    ""      ) do_ls ;;
     *)
         # Unrecognized subcmd
         return 1
