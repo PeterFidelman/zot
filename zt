@@ -42,13 +42,13 @@ do_subcmd() {
     "add"   ) docstr "add a new zettel"
               editor $(new_zettel) ;;
     "all"   ) docstr "view all zettels"
-              tail -n +0 * | pager - ;;
+              tail -n +0 $(ls -t) | pager - ;;
     "cat"   ) docstr "view specified zettel"
               pager "$1" ;;
     "edit"  ) docstr "edit specified zettel"
               editor "$1" ;;
     "grep"  ) docstr "search zettels for a specified regex"
-              grep -i "$1" * ;;
+              grep -i $* * ;;
     "help"  ) docstr "display this message";
               return 1 ;;
     "ls"    ) docstr "view all zettel descriptions"
