@@ -33,6 +33,22 @@ do_ls() {
     done) | pager -
 }
 
+do_links_in() {
+    for i in $(ls -t); do
+        echo -n "$i: "
+        grep -l "\b${i}\b" * | tr '\n' ' '
+	echo
+    done
+}
+
+do_links_out() {
+    for i in $(ls -t); do
+        echo -n "$i: "
+        grep -o '\b[0-9]\{6\}\b' $i | tr '\n' ' '
+	echo
+    done
+}
+
 do_subcmd() {
     subcmd="$1"
     shift
@@ -43,6 +59,8 @@ do_subcmd() {
               editor $(new_zettel) ;;
     "all"   ) docstr "view all zettels"
               tail -n +0 $(ls -t) | pager - ;;
+    "at"    ) docstr "view zettels starting at the specified one"
+              tail -n +0 $(ls -t) | less -p "> $1 <" - ;;
     "cat"   ) docstr "view specified zettel"
               pager "$1" ;;
     "edit"  ) docstr "edit specified zettel"
@@ -51,6 +69,12 @@ do_subcmd() {
               grep -i $* * ;;
     "help"  ) docstr "display this message";
               return 1 ;;
+    "links" ) docstr "view all zettels' outgoing links"
+              (echo '-- Links from X: --'
+              do_links_out
+              echo -e '\n-- Links to X: --'
+	      do_links_in) | pager -
+	      ;;
     "ls"    ) docstr "view all zettel descriptions"
               do_ls ;;
     "split" ) docstr "clone specified zettel"
